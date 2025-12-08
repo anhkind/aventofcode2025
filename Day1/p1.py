@@ -23,5 +23,6 @@ if __name__ == "__main__":
     lines = read_lines(filename)
     result = solve(lines)
     print(result)
+    assert(result == 1129)
 
 
