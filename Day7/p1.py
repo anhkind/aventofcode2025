@@ -19,10 +19,6 @@ def read_lines(filename):
         lines = [line.strip() for line in file if line.strip()]
     return lines
 
-def read_items_single(filename, separator=','):
-    lines = read_lines(filename)
-    return lines[0].split(separator)
-
 if __name__ == "__main__":
     filename = 'input.txt'  # Change this to your actual filename
     lines = read_lines(filename)
