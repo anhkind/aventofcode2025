@@ -1,0 +1,46 @@
+from heapq import *
+
+def solve(ranges):
+    R = map(lambda range: range.split('-'), ranges)
+    R = map(lambda arr: tuple(map(int, arr)), R)
+    R = sorted(R, reverse=True)
+
+    G = set()
+    for x in range(1, 10**6):
+        y = x
+        for _ in range(10):
+            y = int(f"{y}{x}")
+            if y > 10**11: break
+            if y not in G: G.add(y)
+
+    res = 0
+    for y in sorted(G):
+        while R and R[-1][1] < y: R.pop()
+        if not R: break
+
+        l, _ = R[-1]
+        if l <= y: res += y
+    return res
+
+def read_lines(filename):
+    """Reads a file where each line is a string item into a list."""
+    try:
+        with open(filename, 'r') as file:
+            # Remove empty lines if they exist
+            lines = [line.strip() for line in file if line.strip()]
+        return lines
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found!")
+        return []
+
+def read_items_single(filename, separator=','):
+    lines = read_lines(filename)
+    return lines[0].split(separator)
+
+if __name__ == "__main__":
+    filename = 'input.txt'  # Change this to your actual filename
+    ranges = read_items_single(filename)
+    result = solve(ranges)
+    print(result)
+    assert(result == 24774350322)
+
