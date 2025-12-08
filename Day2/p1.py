@@ -14,15 +14,9 @@ def solve(ranges):
     return res
 
 def read_lines(filename):
-    """Reads a file where each line is a string item into a list."""
-    try:
-        with open(filename, 'r') as file:
-            # Remove empty lines if they exist
-            lines = [line.strip() for line in file if line.strip()]
-        return lines
-    except FileNotFoundError:
-        print(f"Error: File '{filename}' not found!")
-        return []
+    with open(filename, 'r') as file:
+        lines = [line.strip() for line in file if line.strip()]
+    return lines
 
 def read_items_single(filename, separator=','):
     lines = read_lines(filename)
