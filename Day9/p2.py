@@ -1,118 +1,99 @@
-from collections import defaultdict
+import functools
+import os
+import time
+from itertools import combinations
 
-def area(p1, p2):
-    x1, y1 = p1
-    x2, y2 = p2
-    return (abs(x1 - x2) + 1) * (abs(y1 - y2) + 1)
+def timer(func):
+    """Decorator to measure the execution time of a function."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        """Wrapper function to execute the decorated function and print its runtime."""
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        end = time.perf_counter()
+        print(f"[{func.__name__}] Result: {result}")
+        duration = end - start
+        time_units = {
+            "ns": (1e-6, 1e9),
+            "us": (1e-3, 1e6),
+            "ms": (1, 1e3),
+            "s": (float("inf"), 1),
+        }
+        for unit, (threshold, multiplier) in time_units.items():
+            if duration < threshold:
+                print(f"[{func.__name__}] Time: {duration * multiplier:.4f} {unit}")
+                break
+        return result
 
-def find_lines(P):
-    X, Y = {}, {}
-    for i, [x, y] in enumerate(P):
-        if x in X:
-            lo, hi = X[x]
-            X[x] = [min(y, lo), max(y, hi)]
-        else: X[x] = [y, y]
+    return wrapper
 
-        if y in Y:
-            lo, hi = Y[y]
-            Y[y] = [min(x, lo), max(x, hi)]
-        else: Y[y] = [x, x]
-    return (X, Y)
+def read_input() -> str:
+    """Read and parse the input file."""
+    input_path = os.path.join(os.path.dirname(__file__), "input.txt")
+    with open(input_path, "r", encoding="utf-8") as f:
+        return f.read().strip()
 
-def adjacent(p1, p2, adj):
-    if p1 not in adj: adj[p1] = list()
-    if p2 not in adj: adj[p2] = list()
-    adj[p1].append(p2)
-    adj[p2].append(p1)
+def calculate_area(p1: tuple[int, int], p2: tuple[int, int]) -> int:
+    """Calculate rectangle area including both corners."""
+    return (abs(p2[0] - p1[0]) + 1) * (abs(p2[1] - p1[1]) + 1)
 
-def find_adj(P):
-    adj = {}
-    X, Y = {}, {}
-    for i, [x, y] in enumerate(P):
-        if x in Y:
-            adjacent(P[i], P[Y[x]], adj)
-        if y in X:
-            adjacent(P[i], P[X[y]], adj)
-        Y[x] = i
-        X[y] = i
-    return adj
+def is_fully_contained(
+        edges: list[tuple[int, int, int, int]],
+        min_x: int,
+        min_y: int,
+        max_x: int,
+        max_y: int,
+) -> bool:
+    """Check if the rectangle is fully contained."""
+    for e_min_x, e_min_y, e_max_x, e_max_y in edges:
+        if min_x < e_max_x and max_x > e_min_x and min_y < e_max_y and max_y > e_min_y:
+            return False
+    return True
 
-def find_polygon(p_curr, p_start, adj, polygon, visited):
-    if p_curr == p_start and len(polygon) > 2: return True
-    for p_next in adj[p_curr]:
-        if p_next not in visited:
-            visited.add(p_next)
-            polygon.append(p_next)
-            found = find_polygon(p_next, p_start, adj, polygon, visited)
-            if found: return found
-            polygon.pop()
-            visited.remove(p_next)
-    return False
+@timer
+def solve(data: str) -> int:
+    """Find the largest rectangle fully contained within the polygon (Go Port)."""
+    tiles = []
+    for line in data.splitlines():
+        parts = line.split(",")
+        tiles.append((int(parts[0]), int(parts[1])))
 
-def is_inside(p, polygon):
-    x, y = p
-    size = len(polygon)
-    inside = False
-    x1, y1 = polygon[0]
-    for i in range(1, size + 1):
-        x2, y2 = polygon[i % size]
+    edges = []
+    n = len(tiles)
+    for i in range(n - 1):
+        p1 = tiles[i]
+        p2 = tiles[i + 1]
+        edges.append(
+            (min(p1[0], p2[0]), min(p1[1], p2[1]), max(p1[0], p2[0]), max(p1[1], p2[1]))
+        )
 
-        # if on the edges -> True
-        if x1 == x2 == x and min(y1, y2) <= y <= max(y1, y2): return True
-        if y1 == y2 == y and min(x1, x2) <= x <= max(x1, x2): return True
+    p_last = tiles[-1]
+    p_first = tiles[0]
+    edges.append(
+        (
+            min(p_last[0], p_first[0]),
+            min(p_last[1], p_first[1]),
+            max(p_last[0], p_first[0]),
+            max(p_last[1], p_first[1]),
+        )
+    )
 
-        if min(y1, y2) < y <= max(y1, y2) and x <= max(x1, x2):
-            x_intersection = (y - y1) * (x2 - x1) / (y2 - y1) + x1
-            if x1 == x2 or x <= x_intersection: inside = not inside
-        x1, y1 = x2, y2
-    return inside
-
-def solve(lines):
-    P = sorted([tuple(map(int, line.split(','))) for line in lines])
-    # X, Y = find_lines(P)
-    # print(X, Y)
-
-    adj = find_adj(P)
-
-    V = set()
     res = 0
-    for i in adj:
-        if i in V: continue
-        visited = set()
-        polygon = []
-        found = find_polygon(i, i, adj, polygon, visited)
-        if not found: continue
-        print(polygon)
 
-        inside = {}
-        for i in range(1, len(P)):
-            pi = P[i]
-            if pi not in inside: inside[pi] = is_inside(pi, polygon)
-            if not inside[pi]:
-                print(pi)
-                continue
+    for p1, p2 in combinations(tiles, 2):
+        area = (abs(p1[0] - p2[0]) + 1) * (abs(p1[1] - p2[1]) + 1)
+        if area <= res:
+            continue
 
-            for j in range(i):
-                pj = P[j]
-                if pj not in inside: inside[pj] = is_inside(pj, polygon)
-                if not inside[pj]:
-                    print(pj)
-                    continue
+        min_x, max_x = (p1[0], p2[0]) if p1[0] < p2[0] else (p2[0], p1[0])
+        min_y, max_y = (p1[1], p2[1]) if p1[1] < p2[1] else (p2[1], p1[1])
 
-                if  is_inside((pi[0], pj[1]), polygon) and is_inside((pj[0], pi[1]), polygon):
-                    res = max(res, area(pi, pj))
+        if is_fully_contained(edges, min_x, min_y, max_x, max_y):
+            res = area
 
-        V = V.union(visited)
     return res
 
-def read_lines(filename):
-    with open(filename, 'r') as file:
-        lines = [line.strip() for line in file if line.strip()]
-    return lines
-
 if __name__ == "__main__":
-    filename = 'test2.txt'  # Change this to your actual filename
-    lines = read_lines(filename)
-    result = solve(lines)
-    print(result)
-    assert(result == 24)
+    input_data = read_input()
+    result = solve(input_data)
+    assert(result == 1343576598)
