@@ -27,9 +27,9 @@ def timer(func):
 
     return wrapper
 
-def read_input() -> str:
+def read_input(file_name) -> str:
     """Read and parse the input file."""
-    input_path = os.path.join(os.path.dirname(__file__), "input.txt")
+    input_path = os.path.join(os.path.dirname(__file__), file_name)
     with open(input_path, "r", encoding="utf-8") as f:
         return f.read().strip()
 
@@ -60,26 +60,14 @@ def solve(data: str) -> int:
 
     edges = []
     n = len(tiles)
-    for i in range(n - 1):
-        p1 = tiles[i]
-        p2 = tiles[i + 1]
+    for i in range(n):
+        p1 = tiles[i % n]
+        p2 = tiles[(i + 1)%n]
         edges.append(
             (min(p1[0], p2[0]), min(p1[1], p2[1]), max(p1[0], p2[0]), max(p1[1], p2[1]))
         )
 
-    p_last = tiles[-1]
-    p_first = tiles[0]
-    edges.append(
-        (
-            min(p_last[0], p_first[0]),
-            min(p_last[1], p_first[1]),
-            max(p_last[0], p_first[0]),
-            max(p_last[1], p_first[1]),
-        )
-    )
-
     res = 0
-
     for p1, p2 in combinations(tiles, 2):
         area = (abs(p1[0] - p2[0]) + 1) * (abs(p1[1] - p2[1]) + 1)
         if area <= res:
@@ -90,10 +78,9 @@ def solve(data: str) -> int:
 
         if is_fully_contained(edges, min_x, min_y, max_x, max_y):
             res = area
-
     return res
 
 if __name__ == "__main__":
-    input_data = read_input()
+    input_data = read_input("input.txt")
     result = solve(input_data)
     assert(result == 1343576598)
