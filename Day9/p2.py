@@ -1,8 +1,8 @@
 from collections import defaultdict
 
-def area(i, j, P):
-    x1, y1 = P[i]
-    x2, y2 = P[j]
+def area(p1, p2):
+    x1, y1 = p1
+    x2, y2 = p2
     return (abs(x1 - x2) + 1) * (abs(y1 - y2) + 1)
 
 def find_lines(P):
@@ -37,16 +37,16 @@ def find_adj(P):
         X[y] = i
     return adj
 
-def find_polygon(pi, p0, adj, polygon, visited):
-    if pi == p0 and len(polygon) > 2: return True
-    for pj in adj[pi]:
-        if pj not in visited:
-            visited.add(pj)
-            polygon.append(pj)
-            found = find_polygon(pj, p0, adj, polygon, visited)
+def find_polygon(p_curr, p_start, adj, polygon, visited):
+    if p_curr == p_start and len(polygon) > 2: return True
+    for p_next in adj[p_curr]:
+        if p_next not in visited:
+            visited.add(p_next)
+            polygon.append(p_next)
+            found = find_polygon(p_next, p_start, adj, polygon, visited)
             if found: return found
             polygon.pop()
-            visited.remove(pj)
+            visited.remove(p_next)
     return False
 
 def is_inside(p, polygon):
@@ -82,7 +82,7 @@ def solve(lines):
         polygon = []
         found = find_polygon(i, i, adj, polygon, visited)
         if not found: continue
-        # print(polygon)
+        print(polygon)
 
         inside = {}
         for i in range(1, len(P)):
@@ -100,7 +100,7 @@ def solve(lines):
                     continue
 
                 if  is_inside((pi[0], pj[1]), polygon) and is_inside((pj[0], pi[1]), polygon):
-                    res = max(res, area(i, j, P))
+                    res = max(res, area(pi, pj))
 
         V = V.union(visited)
     return res
@@ -111,7 +111,7 @@ def read_lines(filename):
     return lines
 
 if __name__ == "__main__":
-    filename = 'test.txt'  # Change this to your actual filename
+    filename = 'test2.txt'  # Change this to your actual filename
     lines = read_lines(filename)
     result = solve(lines)
     print(result)
