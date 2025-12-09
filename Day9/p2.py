@@ -5,6 +5,20 @@ def area(i, j, P):
     x2, y2 = P[j]
     return (abs(x1 - x2) + 1) * (abs(y1 - y2) + 1)
 
+def find_lines(P):
+    X, Y = {}, {}
+    for i, [x, y] in enumerate(P):
+        if x in X:
+            lo, hi = X[x]
+            X[x] = [min(y, lo), max(y, hi)]
+        else: X[x] = [y, y]
+
+        if y in Y:
+            lo, hi = Y[y]
+            Y[y] = [min(x, lo), max(x, hi)]
+        else: Y[y] = [x, x]
+    return (X, Y)
+
 def adjacent(i, j, adj):
     if i not in adj: adj[i] = list()
     if j not in adj: adj[j] = list()
@@ -54,6 +68,9 @@ def is_inside(x, y, polygon):
 
 def solve(lines):
     P = sorted([list(map(int, line.split(','))) for line in lines])
+    X, Y = find_lines(P)
+    print(X, Y)
+
     adj = find_adj(P)
 
     V = set()
