@@ -49,7 +49,8 @@ def find_polygon(pi, p0, adj, polygon, visited):
             visited.remove(pj)
     return False
 
-def is_inside(x, y, polygon):
+def is_inside(p, polygon):
+    x, y = p
     size = len(polygon)
     inside = False
     x1, y1 = polygon[0]
@@ -85,20 +86,20 @@ def solve(lines):
 
         inside = {}
         for i in range(1, len(P)):
-            x1, y1 = P[i]
-            if (x1, y1) not in inside: inside[(x1, y1)] = is_inside(x1, y1, polygon)
-            if not inside[(x1, y1)]:
-                print(x1, y1)
+            pi = P[i]
+            if pi not in inside: inside[pi] = is_inside(pi, polygon)
+            if not inside[pi]:
+                print(pi)
                 continue
 
             for j in range(i):
-                x2, y2 = P[j]
-                if (x2, y2) not in inside: inside[(x2, y2)] = is_inside(x2, y2, polygon)
-                if not inside[(x2, y2)]:
-                    print(x2, y2)
+                pj = P[j]
+                if pj not in inside: inside[pj] = is_inside(pj, polygon)
+                if not inside[pj]:
+                    print(pj)
                     continue
 
-                if  is_inside(x1, y2, polygon) and is_inside(x2, y1, polygon):
+                if  is_inside((pi[0], pj[1]), polygon) and is_inside((pj[0], pi[1]), polygon):
                     res = max(res, area(i, j, P))
 
         V = V.union(visited)
