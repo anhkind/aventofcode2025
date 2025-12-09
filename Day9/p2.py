@@ -19,34 +19,34 @@ def find_lines(P):
         else: Y[y] = [x, x]
     return (X, Y)
 
-def adjacent(i, j, adj):
-    if i not in adj: adj[i] = list()
-    if j not in adj: adj[j] = list()
-    adj[i].append(j)
-    adj[j].append(i)
+def adjacent(p1, p2, adj):
+    if p1 not in adj: adj[p1] = list()
+    if p2 not in adj: adj[p2] = list()
+    adj[p1].append(p2)
+    adj[p2].append(p1)
 
 def find_adj(P):
     adj = {}
     X, Y = {}, {}
     for i, [x, y] in enumerate(P):
         if x in Y:
-            adjacent(i, Y[x], adj)
+            adjacent(P[i], P[Y[x]], adj)
         if y in X:
-            adjacent(i, X[y], adj)
+            adjacent(P[i], P[X[y]], adj)
         Y[x] = i
         X[y] = i
     return adj
 
-def find_polygon(i, i0, adj, polygon, visited, P):
-    if i == i0 and len(polygon) > 2: return True
-    for j in adj[i]:
-        if j not in visited:
-            visited.add(j)
-            polygon.append(P[j])
-            found = find_polygon(j, i0, adj, polygon, visited, P)
+def find_polygon(pi, p0, adj, polygon, visited):
+    if pi == p0 and len(polygon) > 2: return True
+    for pj in adj[pi]:
+        if pj not in visited:
+            visited.add(pj)
+            polygon.append(pj)
+            found = find_polygon(pj, p0, adj, polygon, visited)
             if found: return found
             polygon.pop()
-            visited.remove(j)
+            visited.remove(pj)
     return False
 
 def is_inside(x, y, polygon):
@@ -67,9 +67,9 @@ def is_inside(x, y, polygon):
     return inside
 
 def solve(lines):
-    P = sorted([list(map(int, line.split(','))) for line in lines])
-    X, Y = find_lines(P)
-    print(X, Y)
+    P = sorted([tuple(map(int, line.split(','))) for line in lines])
+    # X, Y = find_lines(P)
+    # print(X, Y)
 
     adj = find_adj(P)
 
@@ -79,7 +79,7 @@ def solve(lines):
         if i in V: continue
         visited = set()
         polygon = []
-        found = find_polygon(i, i, adj, polygon, visited, P)
+        found = find_polygon(i, i, adj, polygon, visited)
         if not found: continue
         # print(polygon)
 
