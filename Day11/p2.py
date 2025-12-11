@@ -73,4 +73,4 @@ def solve(data: str):
 if __name__ == "__main__":
     input_data = read_input("input.txt")
     result = solve(input_data)
-    assert(result == 477)
+    assert(result == 383307150903216)
