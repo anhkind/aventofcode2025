@@ -54,7 +54,7 @@ def parse_regions(data):
         regions.append((m, n, list(counts)))
     return regions
 
-def build_present_shapes(present):
+def build_pshapes(present):
     M = present[1]
     shapes = []
     m, n = len(M), len(M[0])
@@ -126,21 +126,29 @@ def build_present_shapes(present):
 
     return shapes
 
-def build_region_shape(region):
+def build_rshape(region):
     return [0]*region[0]
+
+def get_rshape_rc(rshape, r, c):
+    shape = []
+    for i in range(3):
+        shape.append((rshape[r + i] >> c) & 7)
+    return shape
 
 def can_fit(pshape, rshape, r, c):
     for i in range(3):
-        rbit = (rshape[r + i] >> c) & 7 | (1 if i == 1 else 0)
+        rbit = (rshape[r + i] >> c) & 7
         pbit = pshape[i]
         if (rbit ^ pbit) & pbit != pbit: return False
     return True
 
 @timer
 def solve(presents, regions):
-    pshapes = build_present_shapes(presents[0])
-    rshape  = build_region_shape(regions[0])
+    pshapes = build_pshapes(presents[0])
+    rshape  = build_rshape(regions[0])
     for pshape in pshapes:
+        rshape_rc = get_rshape_rc(rshape, 0, 0)
+        print(rshape_rc)
         print(can_fit(pshape, rshape, 0, 0))
 
     res = 0
