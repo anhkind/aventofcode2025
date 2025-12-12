@@ -135,10 +135,8 @@ def get_rshape_rc(rshape, r, c):
         shape.append((rshape[r + i] >> c) & 7)
     return shape
 
-def can_fit(pshape, rshape, r, c):
-    for i in range(3):
-        rbit = (rshape[r + i] >> c) & 7
-        pbit = pshape[i]
+def can_fit(pshape, rshape_rc):
+    for pbit, rbit in zip(pshape, rshape_rc):
         if (rbit ^ pbit) & pbit != pbit: return False
     return True
 
@@ -149,7 +147,7 @@ def solve(presents, regions):
     for pshape in pshapes:
         rshape_rc = get_rshape_rc(rshape, 0, 0)
         print(rshape_rc)
-        print(can_fit(pshape, rshape, 0, 0))
+        print(can_fit(pshape, rshape_rc))
 
     res = 0
     return res
