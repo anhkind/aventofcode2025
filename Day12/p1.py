@@ -58,7 +58,6 @@ def build_pshapes(present):
     M = present[1]
     shapes = []
     m, n = len(M), len(M[0])
-    print(m, n)
 
     shape = []
     for i in range(m):
@@ -135,21 +134,47 @@ def get_rshape_rc(rshape, r, c):
         shape.append((rshape[r + i] >> c) & 7)
     return shape
 
-def can_fit(pshape, rshape_rc):
+def place(pshape, rshape_rc):
+    res = []
     for pbit, rbit in zip(pshape, rshape_rc):
-        if (rbit ^ pbit) & pbit != pbit: return False
-    return True
+        bit = rbit ^ pbit
+        if bit & pbit != pbit: return []
+        res.append(bit)
+    return res
+
+def set_rc(rshape, shape, r, c):
+    mask = (1 << c) - 1
+    for i in range(3):
+        lo = rshape[r + i] & mask
+        hi = rshape[r + i] >> c
+        hi = hi & 7 | shape[i]
+        rshape[i] = (hi << c) | lo
+
+def check(rshape, counter, P, m, n):
+    if counter.total() == 0: return True
+    for id in counter:
+        if not counter[id]: continue
+        for pshape in P[id]:
+            for r in range(m - 2):
+                for c in range(n - 2):
+                    rshape_rc = get_rshape_rc(rshape, r, c)
+                    placed = place(pshape, rshape_rc)
+                    if placed:
+                        counter[id] -= 1
+                        set_rc(rshape, placed, r, c)
+                        if check(rshape, counter, P, m, n): return True
+                        set_rc(rshape, rshape_rc, r, c)
+                        counter[id] += 1
+    return False
 
 @timer
 def solve(presents, regions):
-    pshapes = build_pshapes(presents[0])
-    rshape  = build_rshape(regions[0])
-    for pshape in pshapes:
-        rshape_rc = get_rshape_rc(rshape, 0, 0)
-        print(rshape_rc)
-        print(can_fit(pshape, rshape_rc))
-
+    P = {present[0]: build_pshapes(present) for present in presents}
     res = 0
+    for region in regions:
+        rshape = build_rshape(region)
+        m, n, counter = region
+        if check(rshape, counter, P, m, n): res += 1
     return res
 
 if __name__ == "__main__":
@@ -160,4 +185,4 @@ if __name__ == "__main__":
     regions = parse_regions(region_data)
 
     result = solve(presents, regions)
-    assert(result == 477)
+    assert(result == 2)
