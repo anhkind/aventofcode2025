@@ -1,8 +1,7 @@
 import functools
 import os
 import time
-from collections import defaultdict
-from functools import cache
+from collections import Counter
 
 def timer(func):
     """Decorator to measure the execution time of a function."""
@@ -50,8 +49,9 @@ def parse_regions(data):
         parts = line.split(' ')
         nxm = parts[0][:-1]
         n, m = map(int, nxm.split('x'))
-        counts = map(int, parts[1:])
-        regions.append((m, n, list(counts)))
+        counter = Counter()
+        for i, cnt in enumerate(parts[1:]): counter[i] = int(cnt)
+        regions.append((m, n, counter))
     return regions
 
 def build_pshapes(present):
