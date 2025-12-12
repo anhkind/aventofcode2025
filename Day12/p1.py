@@ -56,74 +56,87 @@ def parse_regions(data):
 
 def build_pshapes(present):
     M = present[1]
-    shapes = []
+    H = {}
     m, n = len(M), len(M[0])
 
-    shape = []
+    shape, h = [], 0
     for i in range(m):
         bit = 0
         for j in range(n):
-            bit = bit*2 + (M[i][j] == '#')
+            bit = (bit << 1) | (M[i][j] == '#')
+        h = (h << 3) | bit
         shape.append(bit)
-    shapes.append(shape)
+    H[h] = shape
 
-    shape = []
+    shape, h = [], 0
     for i in range(m - 1, -1, -1):
         bit = 0
         for j in range(n):
-            bit = bit*2 + (M[i][j] == '#')
+            bit = (bit << 1) | (M[i][j] == '#')
+        h = (h << 3) | bit
         shape.append(bit)
-    shapes.append(shape)
+    H[h] = shape
 
-    shape = []
+    shape, h = [], 0
     for i in range(m):
         bit = 0
         for j in range(n - 1, -1, -1):
-            bit = bit*2 + (M[i][j] == '#')
+            bit = (bit << 1) | (M[i][j] == '#')
+        h = (h << 3) | bit
         shape.append(bit)
-    shapes.append(shape)
+    H[h] = shape
 
-    shape = []
+    shape, h = [], 0
     for i in range(m - 1, -1, -1):
         bit = 0
         for j in range(n - 1, -1, -1):
-            bit = bit*2 + (M[i][j] == '#')
+            bit = (bit << 1) | (M[i][j] == '#')
+        h = (h << 3) | bit
         shape.append(bit)
-    shapes.append(shape)
+    H[h] = shape
 
-    shape = []
+    shape, h = [], 0
     for j in range(n):
         bit = 0
         for i in range(m):
-            bit = bit*2 + (M[i][j] == '#')
+            bit = (bit << 1) | (M[i][j] == '#')
+        h = (h << 3) | bit
         shape.append(bit)
-    shapes.append(shape)
+    H[h] = shape
 
-    shape = []
+    shape, h = [], 0
     for j in range(n - 1, -1, -1):
         bit = 0
         for i in range(m):
-            bit = bit*2 + (M[i][j] == '#')
+            bit = (bit << 1) | (M[i][j] == '#')
+        h = (h << 3) | bit
         shape.append(bit)
-    shapes.append(shape)
+    H[h] = shape
 
-    shape = []
+    shape, h = [], 0
     for j in range(n):
         bit = 0
         for i in range(m - 1, -1, -1):
-            bit = bit*2 + (M[i][j] == '#')
+            bit = (bit << 1) | (M[i][j] == '#')
+        h = (h << 3) | bit
         shape.append(bit)
-    shapes.append(shape)
+    H[h] = shape
 
-    shape = []
+    shape, h = [], 0
     for j in range(n - 1, -1, -1):
         bit = 0
         for i in range(m - 1, -1, -1):
-            bit = bit*2 + (M[i][j] == '#')
+            bit = (bit << 1) | (M[i][j] == '#')
+        h = (h << 3) | bit
         shape.append(bit)
-    shapes.append(shape)
+    H[h] = shape
 
-    return shapes
+    # print(present, m, n)
+    # for h in H:
+    #     print('h: ', bin(h))
+    #     print_shape(H[h], 3, 3)
+
+    return H.values()
 
 def build_rshape(region):
     return [0]*region[0]
@@ -135,12 +148,12 @@ def get_rshape_rc(rshape, r, c):
     return shape
 
 def place(pshape, rshape_rc):
-    res = []
+    shape = []
     for pbit, rbit in zip(pshape, rshape_rc):
         bit = rbit ^ pbit
         if bit & pbit != pbit: return []
-        res.append(bit)
-    return res
+        shape.append(bit)
+    return shape
 
 def set_rc(rshape, shape, r, c):
     mask = (1 << c) - 1
@@ -148,7 +161,11 @@ def set_rc(rshape, shape, r, c):
         lo = rshape[r + i] & mask
         hi = rshape[r + i] >> c
         hi = hi & 7 | shape[i]
-        rshape[i] = (hi << c) | lo
+        rshape[r + i] = (hi << c) | lo
+
+def print_shape(rshape, m, n):
+    for i, bit in enumerate(rshape):
+        print(bin(bit)[:1:-1].ljust(n, '0'))
 
 def check(rshape, counter, P, m, n):
     if counter.total() == 0: return True
@@ -162,6 +179,7 @@ def check(rshape, counter, P, m, n):
                     if placed:
                         counter[id] -= 1
                         set_rc(rshape, placed, r, c)
+                        # print_shape(rshape, m, n)
                         if check(rshape, counter, P, m, n): return True
                         set_rc(rshape, rshape_rc, r, c)
                         counter[id] += 1
