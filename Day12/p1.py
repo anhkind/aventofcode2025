@@ -33,174 +33,54 @@ def read_input(file_name) -> str:
     with open(input_path, "r", encoding="utf-8") as f:
         return f.read().strip()
 
-def parse_presents(data):
+def parse_input(data):
     lines = data.splitlines()
-    presents = []
-    for i in range(0, len(lines), 5):
-        id = int(lines[i][:-1])
-        M  = lines[i+1:i+4]
-        presents.append((id, M))
-    return presents
-
-def parse_regions(data):
-    lines = data.splitlines()
-    regions = []
+    shapes = [[] for _ in range(6)]
+    index = 0
+    trees = []
     for line in lines:
-        parts = line.split(' ')
-        nxm = parts[0][:-1]
-        n, m = map(int, nxm.split('x'))
-        counter = Counter()
-        for i, cnt in enumerate(parts[1:]): counter[i] = int(cnt)
-        regions.append((m, n, counter))
-    return regions
+        line = line.strip() # to be safe
+        if line == "":
+            index += 1
+            continue
+        if index < 6 and ":" in line:
+            continue
+        if index < 6:
+            shapes[index].append([int(x) for x in line.replace(".","0").replace("#","1")])
+        else:
+            splited = line.split(": ")
+            trees.append( [tuple(int(x) for x in splited[0].split("x")), [int(x) for x in splited[1].split(" ")]])
+    return shapes, trees
 
-def build_pshapes(present):
-    M = present[1]
-    H = {}
-    m, n = len(M), len(M[0])
-
-    shape, h = [], 0
-    for i in range(m):
-        bit = 0
-        for j in range(n):
-            bit = (bit << 1) | (M[i][j] == '#')
-        h = (h << 3) | bit
-        shape.append(bit)
-    H[h] = shape
-
-    shape, h = [], 0
-    for i in range(m - 1, -1, -1):
-        bit = 0
-        for j in range(n):
-            bit = (bit << 1) | (M[i][j] == '#')
-        h = (h << 3) | bit
-        shape.append(bit)
-    H[h] = shape
-
-    shape, h = [], 0
-    for i in range(m):
-        bit = 0
-        for j in range(n - 1, -1, -1):
-            bit = (bit << 1) | (M[i][j] == '#')
-        h = (h << 3) | bit
-        shape.append(bit)
-    H[h] = shape
-
-    shape, h = [], 0
-    for i in range(m - 1, -1, -1):
-        bit = 0
-        for j in range(n - 1, -1, -1):
-            bit = (bit << 1) | (M[i][j] == '#')
-        h = (h << 3) | bit
-        shape.append(bit)
-    H[h] = shape
-
-    shape, h = [], 0
-    for j in range(n):
-        bit = 0
-        for i in range(m):
-            bit = (bit << 1) | (M[i][j] == '#')
-        h = (h << 3) | bit
-        shape.append(bit)
-    H[h] = shape
-
-    shape, h = [], 0
-    for j in range(n - 1, -1, -1):
-        bit = 0
-        for i in range(m):
-            bit = (bit << 1) | (M[i][j] == '#')
-        h = (h << 3) | bit
-        shape.append(bit)
-    H[h] = shape
-
-    shape, h = [], 0
-    for j in range(n):
-        bit = 0
-        for i in range(m - 1, -1, -1):
-            bit = (bit << 1) | (M[i][j] == '#')
-        h = (h << 3) | bit
-        shape.append(bit)
-    H[h] = shape
-
-    shape, h = [], 0
-    for j in range(n - 1, -1, -1):
-        bit = 0
-        for i in range(m - 1, -1, -1):
-            bit = (bit << 1) | (M[i][j] == '#')
-        h = (h << 3) | bit
-        shape.append(bit)
-    H[h] = shape
-
-    # print(present, m, n)
-    # for h in H:
-    #     print('h: ', bin(h))
-    #     print_shape(H[h], 3, 3)
-
-    return H.values()
-
-def build_rshape(region):
-    return [0]*region[0]
-
-def get_rshape_rc(rshape, r, c):
-    shape = []
-    for i in range(3):
-        shape.append((rshape[r + i] >> c) & 7)
-    return shape
-
-def place(pshape, rshape_rc):
-    shape = []
-    for pbit, rbit in zip(pshape, rshape_rc):
-        bit = rbit ^ pbit
-        if bit & pbit != pbit: return []
-        shape.append(bit)
-    return shape
-
-def set_rc(rshape, shape, r, c):
-    mask = (1 << c) - 1
-    for i in range(3):
-        lo = rshape[r + i] & mask
-        hi = rshape[r + i] >> c
-        hi = hi & 7 | shape[i]
-        rshape[r + i] = (hi << c) | lo
-
-def print_shape(rshape, m, n):
-    for i, bit in enumerate(rshape):
-        print(bin(bit)[:1:-1].ljust(n, '0'))
-
-def check(rshape, counter, P, m, n):
-    if counter.total() == 0: return True
-    for id in counter:
-        if not counter[id]: continue
-        for pshape in P[id]:
-            for r in range(m - 2):
-                for c in range(n - 2):
-                    rshape_rc = get_rshape_rc(rshape, r, c)
-                    placed = place(pshape, rshape_rc)
-                    if placed:
-                        counter[id] -= 1
-                        set_rc(rshape, placed, r, c)
-                        # print_shape(rshape, m, n)
-                        if check(rshape, counter, P, m, n): return True
-                        set_rc(rshape, rshape_rc, r, c)
-                        counter[id] += 1
-    return False
+def fits_without_fanagling(size, shape_indices):
+    # all shapes are considered to be 3x3
+    width, height = size
+    amount_of_shapes = len(shape_indices)
+    max_x = width // 3
+    max_y = height // 3
+    return amount_of_shapes <= max_x * max_y
 
 @timer
-def solve(presents, regions):
-    P = {present[0]: build_pshapes(present) for present in presents}
-    res = 0
-    for region in regions:
-        rshape = build_rshape(region)
-        m, n, counter = region
-        if check(rshape, counter, P, m, n): res += 1
-    return res
+def solve(shapes, trees):
+    total = 0
+
+    shape_sizes = [0 for _ in range(6)]
+    for i, shape in enumerate(shapes):
+        shape_sizes[i] = sum(row.count(1) for row in shape)
+
+    for tree in trees:
+        size, shape_indices = tree
+        if size[0] * size[1] < sum(shape_sizes[i] * j for i, j in enumerate(shape_indices)):
+            continue # not enough area
+        if fits_without_fanagling(size, shape_indices):
+            total += 1
+        else:
+            print("Skipping complex case for size", size, "and shapes", shape_indices)
+
+    return total
 
 if __name__ == "__main__":
-    present_data = read_input("test1.txt")
-    presents = parse_presents(present_data)
-
-    region_data = read_input("test2.txt")
-    regions = parse_regions(region_data)
-
-    result = solve(presents, regions)
-    assert(result == 2)
+    data = read_input('input.txt')
+    shapes, trees = parse_input(data)
+    result = solve(shapes, trees)
+    assert(result == 583)
